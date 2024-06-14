@@ -459,6 +459,7 @@ int main() {
 
         // Handle non-direction commands
         if (ch == 'q') {
+            cout << "\nBye!\n";
             break; // Exit the loop if the user quits
         }
 
