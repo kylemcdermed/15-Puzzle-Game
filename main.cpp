@@ -1,294 +1,165 @@
 // 15 Puzzle Game
 
-class Board;
-class Direction;
-const int g_consoleLines {25};
+constexpr int g_consoleLines {5};
 
 class Direction {
 
-private:
-
-    char m_directionInput {};
-
 public:
 
-    friend class Point;
-    friend class Board;
+    enum Type {
 
-    enum Type { 
-
-        up, // 1
-        down, // 2
-        left, // 3
-        right, // 4
-        max_directions, // 5
+        up,
+        left,
+        down,
+        right,
+        maxDirections,
 
     };
 
     Direction() = default;
 
-    Direction(char direction)
-        : m_directionInput {direction} {}
+    Direction(Type type)
+        : m_direction {type} {}
+
+    static std::string directionToString(Type d) {
+
+        switch (d) {
+            case up: return "up";
+            case left: return "left";
+            case down: return "down";
+            case right: return "right";
+            default: return "unknown";
+        }
+
+    }
+
+    std::string toString() const {return directionToString(m_direction);}
+
+    void setDirection(Type d) {m_direction = d;}
+
+    Type getDirection() {return m_direction;}
+
+    int operator-() const {return -m_direction;}
 
     friend std::ostream& operator<<(std::ostream& out, const Direction& d) {
 
-        out << d.m_directionInput;
-
+        out << d.m_direction;
         return out;
-
-    }
-
-    Direction operator-() const; 
-
-    operator Direction() const { 
-
-        return m_directionInput;
-
-    }
-
-    Type getType() const { // get direction
-
-        switch (m_directionInput) {
-
-            case 'w':
-                return up;
-            case 's':
-                return down;
-            case 'a':
-                return left;
-            case 'd':
-                return right;
-            default:
-                return max_directions;
-
-        }
-
-    }
-
-    operator std::string() const {
-
-        switch (m_directionInput) {
-
-            case 'w':
-                return "up";
-            case 's':
-                return "down";
-            case 'a':
-                return "left";
-            case 'd':
-                return "right";
-            default:
-                return "invalid";
-
-        }
 
     }
 
     static Type randomDirection() {
 
-        switch(Random::get(0, max_directions - 1)) {
+        int random = Random::get(0,3);
 
-        case up:
-            return down;
-        case down:
-            return up;
-        case left:
-            return right;
-        case right:
-            return left;
-        default:
-            return max_directions;
+        return static_cast<Type>(random);
 
+    }
+
+    static Type charToDirection(char c) {
+
+        switch (c) {
+            case 'w': return up;
+            case 'a': return left;
+            case 's': return down;
+            case 'd': return right;
+            default: throw std::invalid_argument("Invalid direction character");
         }
-        
-    }
-
-    void printRandomDirection() {
-
-        for (int i {}; i < Direction::Type::max_directions; ++i) {
-            Direction::Type dir = Direction::randomDirection();
-            cout << "Generating random direction... ";
-            switch (dir) {
-
-                case Direction::up:
-                    cout << "up\n";
-                    break;
-                case Direction::down:
-                    cout << "down\n";
-                    break;
-                case Direction::left:
-                    cout << "left\n";
-                    break;
-                case Direction::right:
-                    cout << "right\n";
-                    break;
-                default:
-                    cout << "invalid direction.\n";
-                    break;
-
-            }
-        }
-    }
-
-};
-
-Direction Direction::operator-() const {
-
-    switch (getType()) {
-
-        case up:
-            return down;
-        case down:
-            return up;
-        case left:
-            return right;
-        case right:
-            return left;
-        default:
-            return max_directions;
 
     }
-
-}
-
-class Point {
 
 private:
 
-    int m_x {};
-    int m_y {};
-
-public :
-
-    friend class Board;
-    friend class Point;
-
-    Point(int x=0, int y=0)
-        : m_x {x}
-        , m_y {y} {}
-
-    friend std::ostream& operator<<(std::ostream& out, const Point& p) {
-
-        out << "(" << p.m_x << ", " << p.m_y << ")\n";
-
-        return out;
-
-    }
-
-    bool operator==(const Point& p) {
-
-        return (m_x == p.m_x && m_y == p.m_y);
-
-    }
-
-    bool operator!=(const Point& p) {
-
-        return (!(m_x == p.m_x && m_y == p.m_y));
-
-    }
-
-    int getX() const {return m_x;}
-
-    int getY() const {return m_y;}
-
-    Point getAdjacentPoint(Direction::Type d) const {
-
-        switch(d) {
-
-            case Direction::up:
-                return Point {m_x - 1, m_y};
-            case Direction::down:
-                return Point {m_x + 1, m_y};
-            case Direction::right:
-                return Point {m_x, m_y + 1};
-            case Direction::left:
-                return Point {m_x, m_y - 1};
-            default:
-                return *this;
-
-        }
-    }
+    Type m_direction;
 
 };
 
-namespace UserInput {
+struct Point {
 
-    char getCommandFromUser() {
+public:
 
-        char userInput {};
+    int m_x, m_y;
 
-        cout << "Enter a valid command. ('w'=up, 'a'=left, 's'=down, 'd'=right, or 'q'=quit.)\n";
+    Point(int x=0, int y=0)
+        : m_x {x}, m_y {y} {}
 
-        cin >> userInput;
+    Point getAdjacentPoint(Direction d) {
 
-        cout << '\n';
-
-        return userInput;
-    }
-
-     // Function to convert char command to Direction
-    Direction::Type charToDirection(char ch) {
-        switch(ch) {
-            case 'w':
-                return Direction::up;
-            case 'a':
-                return Direction::left;
-            case 's':
-                return Direction::down;
-            case 'd':
-                return Direction::right;
-            default:
-                return Direction::max_directions;
+        if (d.getDirection() == Direction::up) {
+            return Point{m_x, m_y - 1};
+        } else if (d.getDirection() == Direction::down) {
+            return Point{m_x, m_y + 1};
+        } else if (d.getDirection() == Direction::left) {
+            return Point{m_x - 1, m_y};
+        } else if (d.getDirection() == Direction::right) {
+            return Point{m_x + 1, m_y};
         }
+
     }
 
-}
+    friend bool operator==(const Point& p1, const Point& p2) {
+
+        return p1.m_x == p2.m_x && p1.m_y == p2.m_y;
+
+    }
+
+    friend bool operator!=(const Point& p1, const Point& p2) {
+
+        return p1.m_x != p2.m_x || p1.m_y != p2.m_y;
+
+    }
+
+};
 
 class Tile {
 
 private:
 
-    int m_tile {};
-    int m_missingTile {0};
-    bool m_isItTheMissingTile {false};
+    int m_tile;
 
 public:
 
-    friend class Board;
-    friend class Point;
+    Tile() : m_tile{0} {}
 
     Tile(int tile)
-        : m_tile {tile}
-        , m_missingTile {0}
-        , m_isItTheMissingTile {false} {}
+        : m_tile {tile} {}
 
     friend std::ostream& operator<<(std::ostream& out, const Tile& t) {
 
-        if (t.m_tile == t.m_missingTile) {
-            out << std::setw(4) << " ";
+        if (t.m_tile == 0) {
+            out << std::setw(4) << ' ';  
         } else {
-            out << std::setw(3) << t.m_tile << " ";
+            out << std::setw(4) << t.m_tile; 
         }
-
         return out;
 
     }
 
-    friend bool operator!=(const Tile& t1, const Tile& t2);
+    bool operator==(const Tile& t) const {
 
-    bool operator==(int tileValue) const {
-
-        return (m_tile == tileValue);
+        return m_tile == t.m_tile;
 
     }
 
-    bool isEmpty() const {
+    bool isEmpty() {
 
-        return (m_tile == m_missingTile);
+        return m_tile == 0;
 
     }
 
-    int getNum() const {
+    int& getNum() {
+
+        return m_tile;
+
+    }
+
+    bool operator!=(int value) const {
+
+        return m_tile != value;
+
+    }
+
+    Tile getTile() const {
 
         return m_tile;
 
@@ -296,186 +167,188 @@ public:
 
 };
 
-bool operator!=(const Tile& t1, const Tile& t2) {
-
-    return (t1.m_tile != t2.m_tile);
-
-}
-
 class Board {
 
 private:
 
-    std::array<std::array<Tile,4>, 4> m_boardArray {
-        Tile{ 1 }, Tile { 2 }, Tile { 3 } , Tile { 4 },
-        Tile { 5 } , Tile { 6 }, Tile { 7 }, Tile { 8 },
-        Tile { 9 }, Tile { 10 }, Tile { 11 }, Tile { 12 },
-        Tile { 13 }, Tile { 14 }, Tile { 15 }, Tile { 0 } };
+    std::array<std::array<Tile, 4>, 4> m_board;
 
 public:
 
-    Board () {
+    Board() {
 
-        randomize();
+        for (int i=0; i < g_consoleLines; ++i) {
+            cout << '\n';
+        }
 
+        int value = 1;
+        for (int i = 0; i < 4; ++i) {
+            for (int j = 0; j < 4; ++j) {
+                if (i == 3 && j == 3) {
+                    m_board[i][j] = Tile {0};  // 0 is empty space
+                } else {
+                    m_board[i][j] = value++;
+                }
+            }
+        }
     }
 
     friend std::ostream& operator<<(std::ostream& out, const Board& b) {
 
-        for (int row = 0; row < 4; ++row) {
-        for (int col = 0; col < 4; ++col) {
-            if (b.m_boardArray[row][col].isEmpty()) {
-                out << std::setw(4) << " ";
-            } else {
-                out << std::setw(4) << b.m_boardArray[row][col].getNum();
+        for (int i{0}; i < 4; ++i) {
+            for (int j{0}; j < 4; ++j) {
+                if (b.m_board[i][j] != 0) {
+                    out << b.m_board[i][j] << '\t';
+                } else {
+                    out << ' ' << '\t';
+                }
             }
+            out << '\n';
         }
-        out << '\n';
-    }
-    return out;
-
-
+        return out;
     }
 
-    friend bool operator==(const Board& b1, const Board& b2) {
+    bool operator==(const Board& b) const {
 
-        for (int i{}; i < 4; ++i) {
-            for (int j{}; j < 4; ++j) {
-                if (b1.m_boardArray[i][j] != b2.m_boardArray[i][j]) {
-                    return false;
+        return m_board == b.m_board;
+
+    }
+
+    bool validPoint(Point p) {
+
+        return p.m_x >= 0 && p.m_x < 4 && p.m_y >= 0 && p.m_y < 4;
+
+    }
+
+    Point emptyTile() {
+        for (int i = 0; i < 4; ++i) {
+            for (int j = 0; j < 4; ++j) {
+                if (m_board[i][j].isEmpty()) { // Check if the tile is empty
+                    return Point{i, j}; // Return the position of the empty tile
                 }
             }
         }
-        return true;
+        return Point{-1, -1}; // Return an invalid Point if no empty tile is found
     }
 
-    void printLines();
+    void swapTiles(Point& p1, Point& p2) {
 
-    bool validPoint(const Point& p) const { // is point inside or outside board
-
-        return (p.m_x >= 0 && p.m_x < 4 && p.m_y >= 0 && p.m_y < 4);
+        std::swap(m_board[p1.m_x][p1.m_y], m_board[p2.m_x][p2.m_y]);
 
     }
 
-    Point locateEmptyTile() const {
+    bool moveDirection(Direction& dir) {
+        Point empty = emptyTile();
+        Point adjacent = empty.getAdjacentPoint(dir);
 
-        for (int row {}; row < 4; ++row) {
-            for (int col {}; col < 4; ++col) {
-                if (m_boardArray[row][col].isEmpty()) {
-                    return Point{row, col};
-                }
-            }
+        if (validPoint(adjacent)) {
+            swapTiles(empty, adjacent);
+            return true;
         }
-        return Point(-1,-1);
+        return false;
     }
 
-    void swapTiles(const Point& p1, const Point& p2);
-
-    bool moveTile(Direction::Type dir);
-
-    void randomize() {
-
-        srand(static_cast<unsigned>(time(nullptr)));
-
-        for (int i{}; i < 1000; ++i) {
+    void randomizeBoard() {
+        Direction d;
+        for (int i{0}; i < 1000; ++i) {
             Direction::Type randomDir = Direction::randomDirection();
-            Point emptyTile = locateEmptyTile();
+            d.setDirection(randomDir);
+            Point empty = emptyTile();
+            Point adjacent = empty.getAdjacentPoint(d);
 
-            Point adjacentPoint = emptyTile.getAdjacentPoint(randomDir);
-
-            if (validPoint(adjacentPoint)) {
-                swapTiles(emptyTile, adjacentPoint);
+            if (validPoint(adjacent)) {
+                swapTiles(empty, adjacent); // Access member function directly
             }
         }
-
     }
 
-    bool playerWon() const {
+    bool playerWon(const Board& b) {
 
-        Board solvedBoard;
-
-        for (int i{}; i < 4; ++i) {
-            for (int j{}; j < 4; ++j) {
-                if (m_boardArray[i][j] != solvedBoard.m_boardArray[i][j]) {
-                    return false;
-                }
-            }
+        if (b.m_board == m_board) {
+            return true;
         }
-        return true;
+        return false;
     }
-
-    void updateBoard();
 
 };
 
-void Board::updateBoard() {
+namespace UserInput {
 
-    cout << *this;
-
-}
-
-void Board::swapTiles(const Point& p1, const Point& p2) {
-
-    Tile temp = m_boardArray[p1.m_x][p1.m_y];
-    m_boardArray[p1.m_x][p1.m_y] = m_boardArray[p2.m_x][p2.m_y];
-    m_boardArray[p2.m_x][p2.m_y] = temp;
-
-}
-
-bool Board::moveTile(Direction::Type dir) {
-
-    Point emptyTile = locateEmptyTile();
-    Point adjacentTile = emptyTile.getAdjacentPoint(dir);
-
-    if (validPoint(adjacentTile)) {
-        // swap tiles
-        swapTiles(emptyTile, adjacentTile);
-        return true;
+    int getCommandFromUser(char c) {
+        switch (c) {
+        case 'w':
+            return 0;
+        case 'a':
+            return 1;
+        case 's':
+            return 2;
+        case 'd':
+            return 3;
+        case 'q':
+            return 4;
+        default:
+            cout << c << '\n';
+            cin.ignore();
+            cin.clear();
     }
-    return false;
-
-}
-
-void Board::printLines() {
-
-    for (int i {}; i < g_consoleLines; ++i) {
-        cout << '\n';
+        return c;
     }
 
 }
 
 int main() {
 
-    Board board{};
-    // Call updateBoard to print the initial board
-    board.printLines();
-    board.updateBoard();
+    Board board;
+    board.randomizeBoard();
+    cout << board;
 
-    // Main game loop
-     while (true) {
-        // Print the current board after each input
+    bool end {false};
+    Direction direction;
 
-        char ch{ UserInput::getCommandFromUser() };
+    // Generate and print random directions
+    for (int i {0}; i < 4; ++i) {
+        Direction::Type randomDir = Direction::randomDirection();
+        direction.setDirection(randomDir);
+        cout << "Generating random direction... " << direction.toString() << '\n';
+    }
 
-        // Handle non-direction commands
-        if (ch == 'q') {
-            cout << "\nBye!\n";
-            break; // Exit the loop if the user quits
+    cout << "\nEnter a valid command (w=up/a=left/s=down/d=right/q=quit): ";
+
+    while (!end) {
+        char c;
+        cin >> c;
+
+        try {
+            Direction::Type dir = Direction::charToDirection(c);
+            direction.setDirection(dir);
+            cout << "You entered direction: " << direction.toString() << '\n';
+            board.moveDirection(direction);
+            cout << board;
+            if (board.playerWon(board)) {
+                end = true;
+            }
+        } catch (const std::invalid_argument&) {
+            if (c == 'q') {
+                end = true;
+                cout << "\n\nBye!\n\n";
+                break;
+            } else {
+                cout << "Invalid input, please enter w, a, s, d, or q.\n";
+            }
         }
 
-        // Handle direction commands
-        Direction::Type dirType = UserInput::charToDirection(ch);
+        cin.clear();
+        cin.ignore(numeric_limits<streamsize>::max(), '\n');
 
-        bool userMoved { board.moveTile(dirType) };
-        if (userMoved) {
-            board.updateBoard();
-        }
-
-        if (board.playerWon()) {
-            cout << "You won!\n";
-            break; // Exit the loop if the player wins
+        if (!end) {
+            cout << "\nEnter a valid command (w=up/a=left/s=down/d=right/q=quit): ";
+        } else if (end){
+            cout << "\n\nYou won!\n\n";
         }
     }
 
+    cout << "Game over.\n";
+
+    return 0;
 
 }
